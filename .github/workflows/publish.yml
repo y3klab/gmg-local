@@ -1,0 +1,52 @@
+# Publishing uses PyPI Trusted Publishing (OIDC) - there is no API token
+# anywhere, not in the repo and not in Actions secrets. GitHub proves the
+# workflow's identity to PyPI directly.
+#
+# One-time setup, before the first release:
+#   1. https://pypi.org/manage/account/publishing/
+#   2. Add a pending publisher:
+#        PyPI project name : gmg-local
+#        Owner             : y3klab
+#        Repository        : gmg-local
+#        Workflow name     : publish.yml
+#        Environment       : pypi
+#   3. Create the `pypi` environment under Settings -> Environments.
+#
+# Then publishing is: tag a version and cut a GitHub Release.
+
+name: publish
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install build
+      - run: python -m build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write   # required for Trusted Publishing
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
