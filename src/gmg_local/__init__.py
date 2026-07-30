@@ -28,7 +28,7 @@ from .discovery import discover, grills
 from .grill import Grill
 from .protocol import GmgError, parse_status, poll_interval_for, u16, u32
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 #: Backwards-compatible alias. The class was lowercase ``grill`` in the code
 #: this was extracted from; ``Grill`` is the canonical name.

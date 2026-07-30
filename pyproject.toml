@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "gmg-local"
-version = "0.1.0"
+version = "0.2.0"
 description = "Local UDP client for Green Mountain Grills Wi-Fi pellet grills"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -22,7 +22,7 @@ classifiers = [
 dependencies = []
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0"]
+dev = ["pytest>=8.0", "pytest-cov>=5.0"]
 
 [project.urls]
 Homepage = "https://github.com/y3klab/gmg-local"
@@ -30,6 +30,9 @@ Issues = "https://github.com/y3klab/gmg-local/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/gmg_local"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"src/gmg_local/py.typed" = "gmg_local/py.typed"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
