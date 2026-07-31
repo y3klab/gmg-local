@@ -21,6 +21,7 @@ from gmg_local import (
     STATUS_MIN_LEN,
     STATUS_OBSERVED_LEN,
     GmgError,
+    parse_firmware,
     parse_status,
     poll_interval_for,
     u16,
@@ -157,6 +158,34 @@ def test_minimum_length_frame_parses():
     """34 bytes is the shortest usable frame: the parser reads through byte 33."""
     state = parse_status(build_frame(length=STATUS_MIN_LEN))
     assert state["fireStatePercentage"] == 25
+
+
+# --- firmware -------------------------------------------------------------
+
+
+def test_firmware_reply_is_returned_verbatim():
+    """The exact reply observed from hardware on 2026-07-30.
+
+    The leading ``UN`` may be a command echo, but ``UL!`` does not echo, so
+    stripping it would be a guess. Verbatim until proven otherwise.
+    """
+    assert parse_firmware(b"UNJB02SUF0_2.3") == "UNJB02SUF0_2.3"
+
+
+def test_firmware_rejects_non_utf8():
+    with pytest.raises(GmgError):
+        parse_firmware(b"\xff\xfe\x00")
+
+
+def test_firmware_rejects_empty():
+    with pytest.raises(GmgError):
+        parse_firmware(b"")
+
+
+def test_firmware_rejects_unprintable():
+    """Binary junk (e.g. a stray status frame) must not become a version string."""
+    with pytest.raises(GmgError):
+        parse_firmware(b"\x0c\x142\x16\x19\x15\x19")
 
 
 # --- polling cadence ------------------------------------------------------

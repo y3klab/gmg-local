@@ -8,6 +8,7 @@ import pytest
 
 from gmg_local import Grill, GmgError
 from gmg_local.const import (
+    CODE_FIRMWARE,
     CODE_POWER_OFF,
     CODE_POWER_ON,
     CODE_POWER_ON_COLD_SMOKE,
@@ -151,6 +152,60 @@ def test_serial_round_trips(fake_socket):
     g = Grill("10.0.0.9")
     assert g.serial() == "GMG87654321"
     assert g.serial_number == "GMG87654321"
+
+
+# --- firmware(): same retry contract as status() ---------------------------
+
+
+def test_firmware_round_trips_and_caches(fake_socket):
+    fake_socket(lambda msg: b"UNJB02SUF0_2.3" if msg == CODE_FIRMWARE else None)
+    g = _grill()
+    assert g.firmware() == "UNJB02SUF0_2.3"
+    assert g.firmware_version == "UNJB02SUF0_2.3"
+
+
+def test_firmware_starts_uncached():
+    assert _grill().firmware_version == ""
+
+
+def test_firmware_retries_through_silence_then_succeeds(fake_socket):
+    """The grill drops the occasional datagram even when healthy (~1 in 3
+    observed live on 2026-07-30) - silence must be retried, not raised."""
+    calls = {"n": 0}
+
+    def replies(msg):
+        calls["n"] += 1
+        return None if calls["n"] <= 2 else b"UNJB02SUF0_2.3"
+
+    fake_socket(replies)
+    assert _grill().firmware() == "UNJB02SUF0_2.3"
+    assert calls["n"] == 3
+
+
+def test_firmware_retries_junk_rather_than_returning_it(fake_socket):
+    """Binary junk is a transport artifact, not a version string."""
+    calls = {"n": 0}
+
+    def replies(msg):
+        calls["n"] += 1
+        return b"\x0c\x142\x16\x19\x15\x19" if calls["n"] == 1 else b"UNJB02SUF0_2.3"
+
+    fake_socket(replies)
+    assert _grill().firmware() == "UNJB02SUF0_2.3"
+    assert calls["n"] == 2
+
+
+def test_firmware_gives_up_after_retries_and_says_why(fake_socket):
+    fake_socket(lambda msg: None)
+    with pytest.raises(GmgError) as err:
+        _grill().firmware(retries=3)
+    assert "3 silent" in str(err.value)
+
+
+def test_firmware_sends_the_right_command(fake_socket):
+    created = fake_socket(lambda msg: b"UNJB02SUF0_2.3")
+    _grill().firmware()
+    assert created[0].sent[0][0] == CODE_FIRMWARE
 
 
 # --- range guards ---------------------------------------------------------

@@ -14,6 +14,13 @@ UDP_PORT = 8080
 
 CODE_SERIAL = b"UL!"
 CODE_STATUS = b"UR001!"
+
+#: Firmware query. Observed reply from hardware (Jim Bowie, 2026-07-30):
+#: ``b"UNJB02SUF0_2.3"``. The leading ``UN`` matches the command bytes and may
+#: be an echo - but ``UL!`` does not echo, so stripping it would be a guess and
+#: the reply is surfaced verbatim. Command name corroborated by
+#: brandenc40/green-mountain-grill (``GetFirmware``).
+CODE_FIRMWARE = b"UN!"
 CODE_POWER_ON = b"UK001!"
 CODE_POWER_ON_COLD_SMOKE = b"UK002!"
 CODE_POWER_OFF = b"UK004!"

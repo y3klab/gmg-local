@@ -26,9 +26,9 @@ from .const import (
 )
 from .discovery import discover, grills
 from .grill import Grill
-from .protocol import GmgError, parse_status, poll_interval_for, u16, u32
+from .protocol import GmgError, parse_firmware, parse_status, poll_interval_for, u16, u32
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 #: Backwards-compatible alias. The class was lowercase ``grill`` in the code
 #: this was extracted from; ``Grill`` is the canonical name.
@@ -40,6 +40,7 @@ __all__ = [
     "discover",
     "grills",
     "grill",
+    "parse_firmware",
     "parse_status",
     "poll_interval_for",
     "u16",

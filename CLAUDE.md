@@ -57,6 +57,13 @@ Home Assistant. Don't put I/O in it.
   at the documented offsets. They prove the parser is self-consistent with observed
   behaviour, **not** that the offsets are right. A genuine captured frame has never been
   preserved; capturing one is the prerequisite for decoding bytes 34-51.
+- **Firmware comes from `UN!`, not from status bytes 9-15.** Upstream
+  (brandenc40) labels status bytes 9-15 `FirmwareDetails`; on real hardware
+  (Jim Bowie, 2026-07-30) those bytes are binary (`0c 14 32 16 19 15 19`), not
+  text. `UN!` answers `b"UNJB02SUF0_2.3"`. The leading `UN` matches the command
+  bytes and may be an echo - but `UL!` does not echo, so it is surfaced
+  **verbatim** rather than stripped on a guess. If the echo question is ever
+  settled, `parse_firmware` is the one place to change.
 - **Bytes 34-51 arrive and are discarded.** A healthy grill answers with ~52 bytes and this
   decodes through 33. Another implementation labels offsets 48 and 50 as pellet alarms -
   unverified here, and the most promising unexplored feature.

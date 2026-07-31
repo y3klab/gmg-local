@@ -9,6 +9,7 @@ import threading
 from typing import Any
 
 from .const import (
+    CODE_FIRMWARE,
     CODE_POWER_OFF,
     CODE_POWER_ON,
     CODE_POWER_ON_COLD_SMOKE,
@@ -22,7 +23,7 @@ from .const import (
     STATUS_MIN_LEN,
     UDP_PORT,
 )
-from .protocol import GmgError, parse_status
+from .protocol import GmgError, parse_firmware, parse_status
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -38,6 +39,7 @@ class Grill:
     PROBE_TARGET_CLEAR = PROBE_TARGET_CLEAR
     CODE_SERIAL = CODE_SERIAL
     CODE_STATUS = CODE_STATUS
+    CODE_FIRMWARE = CODE_FIRMWARE
 
     def __init__(self, ip: str, serial_number: str = "") -> None:
         if not ipaddress.ip_address(ip):
@@ -47,6 +49,7 @@ class Grill:
 
         self._ip = ip
         self._serial_number = serial_number
+        self._firmware = ""
         self.state: dict[str, Any] = {}
 
         # The grill serves ONE client at a time, so serialize our own traffic:
@@ -110,6 +113,42 @@ class Grill:
         """Ask the grill for its serial number, and cache it."""
         self._serial_number = self.send(CODE_SERIAL).decode("utf-8")
         return self._serial_number
+
+    def firmware(self, retries: int = 5) -> str:
+        """Ask the grill for its firmware string, and cache it.
+
+        The reply is surfaced verbatim - see
+        :func:`~gmg_local.protocol.parse_firmware` for what "verbatim" means
+        here and why the leading ``UN`` is not stripped.
+
+        Retries on silence and on junk, like :meth:`status`: the grill drops
+        the occasional datagram even when healthy (observed ~1 in 3 on an idle
+        grill), and that is a transport artifact rather than an answer.
+        """
+        silent = 0
+        bad: list[bytes] = []
+
+        for _ in range(retries):
+            raw = self.send(CODE_FIRMWARE)
+            if raw is None:
+                silent += 1
+                continue
+            try:
+                self._firmware = parse_firmware(raw)
+            except GmgError:
+                bad.append(raw)
+                continue
+            return self._firmware
+
+        raise GmgError(
+            f"no usable firmware reply from grill at {self._ip} after "
+            f"{retries} tries ({silent} silent, {len(bad)} unparsable: {bad})"
+        )
+
+    @property
+    def firmware_version(self) -> str:
+        """The firmware string from the last :meth:`firmware` call, or ``""``."""
+        return self._firmware
 
     # --- writes -----------------------------------------------------------
 

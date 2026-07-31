@@ -106,6 +106,28 @@ def parse_status(frame: Sequence[int]) -> dict[str, Any]:
     return state
 
 
+def parse_firmware(raw: bytes) -> str:
+    """Decode a ``UN!`` reply into the grill's firmware string, verbatim.
+
+    :param raw: the raw bytes of a ``UN!`` response.
+    :raises GmgError: if the reply is empty or not printable UTF-8.
+
+    Observed on hardware (Jim Bowie, 2026-07-30): ``b"UNJB02SUF0_2.3"``. The
+    leading ``UN`` matches the command bytes and may be an echo, but ``UL!``
+    does not echo its command, so stripping it would be a guess - the string is
+    returned exactly as the grill sent it. The status frame's bytes 9-15,
+    labelled ``FirmwareDetails`` upstream, are binary and unrelated on the
+    hardware observed; ``UN!`` is the firmware source.
+    """
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as err:
+        raise GmgError(f"firmware reply is not UTF-8: {raw!r}") from err
+    if not text or not text.isprintable():
+        raise GmgError(f"firmware reply is empty or unprintable: {raw!r}")
+    return text
+
+
 def poll_interval_for(state: dict[str, Any] | None) -> int:
     """Seconds to wait before the next poll, given a parsed status dict.
 
