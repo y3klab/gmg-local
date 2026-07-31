@@ -5,7 +5,6 @@ Local UDP client for **Green Mountain Grills** Wi-Fi pellet grills.
 No cloud account, no vendor API, no internet. It talks to the grill on your LAN
 and nothing else.
 
-> **Not on PyPI yet** - built and tested, awaiting a decision to publish.
 > Origin and attribution: [NOTICE.md](NOTICE.md).
 
 ```python
@@ -16,21 +15,10 @@ for grill in discover():
     print(grill.serial_number, state["temp"], "F")
 ```
 
-## Why this exists
-
-Every public Python implementation of this protocol froze on **2023-01-28**. The
-most-installed Home Assistant integration for these grills reads grill
-temperature from a **single byte**, so a 350 °F grill reports as **94 °F** - the
-one number the device exists to tell you.
-
-```python
-u16(94, 1) == 350   # not 94
-```
-
 ## Install
 
 ```bash
-pip install -e .          # from a clone; not on PyPI yet
+pip install gmg-local
 ```
 
 Requires Python 3.11+. No dependencies.
@@ -52,6 +40,9 @@ Requires Python 3.11+. No dependencies.
 
 A healthy grill answers `UR001!` with **52 bytes**; this library decodes through
 byte 33.
+
+Temperatures are **16-bit little-endian pairs**. Reading only the low byte wraps
+anything above 255, so a 350 °F grill reports as 94 °F - `u16(94, 1) == 350`.
 
 | offset | field | notes |
 |---|---|---|
