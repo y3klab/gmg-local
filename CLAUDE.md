@@ -84,6 +84,11 @@ bump version in pyproject.toml → tag vX.Y.Z → push tag → create a GitHub R
 The release fires `publish.yml`, which builds and then **waits for approval** at the `pypi`
 environment before uploading. **PyPI versions can never be reused**, even after deletion.
 
+Release notes are **informative, succinct, friendly**: the tagline names what changed in
+plain words; the body opens by naming the thing, states facts declaratively with real
+commands and numbers, names any manual step plainly without softening it, and cuts process
+trivia (test counts, internal mechanics). Always state upgrade impact.
+
 ## Don't
 
 - **Don't add Home Assistant imports, or anything HA-shaped.** That is what makes this
