@@ -5,8 +5,6 @@ Local UDP client for **Green Mountain Grills** Wi-Fi pellet grills.
 No cloud account, no vendor API, no internet. It talks to the grill on your LAN
 and nothing else.
 
-> Origin and attribution: [NOTICE.md](NOTICE.md).
-
 ```python
 from gmg_local import discover
 
@@ -104,6 +102,9 @@ Preserving a genuine 52-byte capture is the prerequisite for decoding bytes
 
 ## Credits
 
-See [NOTICE.md](NOTICE.md). Original integration by **jwhitby91**; protocol
-cross-checked against **brandenc40/green-mountain-grill** and **Christopher
-McKay's** `gmg`.
+Descends from
+[`jwhitby91/gmg_home_assistant`](https://github.com/jwhitby91/gmg_home_assistant)
+by **Jason (jwhitby91)** - the work that first made these grills usable from
+Home Assistant - since substantially rewritten. Protocol cross-checked against
+[`brandenc40/green-mountain-grill`](https://github.com/brandenc40/green-mountain-grill)
+and **Christopher McKay's** `gmg` on PyPI.

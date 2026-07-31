@@ -101,7 +101,6 @@ trivia (test counts, internal mechanics). Always state upgrade impact.
 
 ## Origin
 
-See [`NOTICE.md`](NOTICE.md). Descends from `jwhitby91/gmg_home_assistant`, which carries no
-licence; that was resolved by rewriting rather than by asking, and the measurement is
-recorded there. Protocol cross-checked against `brandenc40/green-mountain-grill` (Go) and
-`gmg` on PyPI.
+Descends from `jwhitby91/gmg_home_assistant`, since substantially rewritten; credit stays
+in the README for the package's lifetime. Protocol cross-checked against
+`brandenc40/green-mountain-grill` (Go) and `gmg` on PyPI.
