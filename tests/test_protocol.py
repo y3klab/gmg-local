@@ -21,6 +21,7 @@ from gmg_local import (
     STATUS_MIN_LEN,
     STATUS_OBSERVED_LEN,
     GmgError,
+    model_for,
     parse_firmware,
     parse_status,
     poll_interval_for,
@@ -180,6 +181,20 @@ def test_firmware_rejects_non_utf8():
 def test_firmware_rejects_empty():
     with pytest.raises(GmgError):
         parse_firmware(b"")
+
+
+@pytest.mark.parametrize(
+    "firmware,model",
+    [
+        ("UNJB02SUF0_2.3", "Jim Bowie"),  # verified on hardware 2026-07-30
+        ("UNDB02SUF0_2.3", "Daniel Boone"),  # corroborated designator, unseen
+        ("UNXX02SUF0_2.3", None),  # unknown prefix must not become a guess
+        ("UN", None),
+        ("", None),
+    ],
+)
+def test_model_is_conservative(firmware, model):
+    assert model_for(firmware) == model
 
 
 def test_firmware_rejects_unprintable():

@@ -128,6 +128,27 @@ def parse_firmware(raw: bytes) -> str:
     return text
 
 
+#: Model prefixes at bytes 2-3 of the ``UN!`` reply (after the ``UN``).
+#: Conservative on purpose: JB is verified against hardware (an owner-confirmed
+#: Jim Bowie reporting ``UNJB02SUF0_2.3``, 2026-07-30); DB is corroborated by
+#: GMG's own ``DBWF`` app-manual designator but has not been seen on hardware.
+#: Anything else returns ``None`` rather than a guess.
+_MODEL_PREFIXES = {
+    "JB": "Jim Bowie",
+    "DB": "Daniel Boone",
+}
+
+
+def model_for(firmware: str) -> str | None:
+    """The grill model implied by a firmware string, or ``None`` if unknown.
+
+    Pure and conservative: an unrecognised prefix is ``None``, never a guess.
+    """
+    if len(firmware) < 4:
+        return None
+    return _MODEL_PREFIXES.get(firmware[2:4])
+
+
 def poll_interval_for(state: dict[str, Any] | None) -> int:
     """Seconds to wait before the next poll, given a parsed status dict.
 

@@ -26,7 +26,15 @@ from .const import (
 )
 from .discovery import discover, grills
 from .grill import Grill
-from .protocol import GmgError, parse_firmware, parse_status, poll_interval_for, u16, u32
+from .protocol import (
+    GmgError,
+    model_for,
+    parse_firmware,
+    parse_status,
+    poll_interval_for,
+    u16,
+    u32,
+)
 
 __version__ = "0.3.0"
 
@@ -40,6 +48,7 @@ __all__ = [
     "discover",
     "grills",
     "grill",
+    "model_for",
     "parse_firmware",
     "parse_status",
     "poll_interval_for",

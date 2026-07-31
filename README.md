@@ -42,6 +42,7 @@ Requires Python 3.11+. No dependencies.
 | `discover(timeout=1, ip_bind_address="0.0.0.0", target=None)` | Broadcast for grills. Pass `target` to unicast across VLANs, where broadcast dies at the L2 edge. |
 | `Grill.status(retries=5)` | One poll, decoded. Retries on silence **and** on junk. |
 | `Grill.firmware(retries=5)` | The firmware string (`UN!`), verbatim - e.g. `UNJB02SUF0_2.3`. Same retry contract as `status()`. |
+| `model_for(firmware)` | Pure. `"Jim Bowie"` for a `JB` firmware prefix, `None` for anything unrecognised. |
 | `Grill.set_temp(f)` / `set_temp_probe(f, n)` | Targets, in Fahrenheit. |
 | `Grill.power_on()` / `power_on_cool()` / `power_off()` | Cold smoke is `power_on_cool`. |
 | `parse_status(frame)` | Pure. No sockets, no clock - testable without a grill. |
