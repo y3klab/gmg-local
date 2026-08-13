@@ -102,9 +102,9 @@ Preserving a genuine 52-byte capture is the prerequisite for decoding bytes
 
 ## Credits
 
-Descends from
+Inspired by
 [`jwhitby91/gmg_home_assistant`](https://github.com/jwhitby91/gmg_home_assistant)
-by **Jason (jwhitby91)** - the work that first made these grills usable from
-Home Assistant - since substantially rewritten. Protocol cross-checked against
+by **Jason (jwhitby91)** - the work that first connected my Green Mountain Grill
+with Home Assistant - and rewritten from scratch here. Protocol cross-checked against
 [`brandenc40/green-mountain-grill`](https://github.com/brandenc40/green-mountain-grill)
 and **Christopher McKay's** `gmg` on PyPI.

@@ -101,6 +101,7 @@ trivia (test counts, internal mechanics). Always state upgrade impact.
 
 ## Origin
 
-Descends from `jwhitby91/gmg_home_assistant`, since substantially rewritten; credit stays
-in the README for the package's lifetime. Protocol cross-checked against
-`brandenc40/green-mountain-grill` (Go) and `gmg` on PyPI.
+Inspired by `jwhitby91/gmg_home_assistant`, rewritten from scratch (measured: 8
+non-trivial verbatim lines remained); credit stays in the README for the package's
+lifetime. Protocol cross-checked against `brandenc40/green-mountain-grill` (Go) and
+`gmg` on PyPI.
