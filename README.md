@@ -3,7 +3,7 @@
 Local UDP client for **Green Mountain Grills** Wi-Fi pellet grills.
 
 No cloud account, no vendor API, no internet. It talks to the grill on your LAN
-and nothing else.
+and nothing else - just delicious data.
 
 ```python
 from gmg_local import discover

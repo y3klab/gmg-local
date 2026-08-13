@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "gmg-local"
 version = "0.3.0"
-description = "Local UDP client for Green Mountain Grills Wi-Fi pellet grills"
+description = "Local UDP client for Green Mountain Grills Wi-Fi pellet grills - no cloud, just delicious data"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
