@@ -106,5 +106,5 @@ Inspired by
 [`jwhitby91/gmg_home_assistant`](https://github.com/jwhitby91/gmg_home_assistant)
 by **Jason (jwhitby91)** - the work that first connected my Green Mountain Grill
 with Home Assistant - and rewritten from scratch here. Protocol cross-checked against
-[`brandenc40/green-mountain-grill`](https://github.com/brandenc40/green-mountain-grill)
+[`brandenco/green-mountain-grill`](https://github.com/brandenco/green-mountain-grill)
 and **Christopher McKay's** `gmg` on PyPI.

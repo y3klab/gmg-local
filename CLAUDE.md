@@ -58,7 +58,7 @@ Home Assistant. Don't put I/O in it.
   behavior, **not** that the offsets are right. A genuine captured frame has never been
   preserved; capturing one is the prerequisite for decoding bytes 34-51.
 - **Firmware comes from `UN!`, not from status bytes 9-15.** Upstream
-  (brandenc40) labels status bytes 9-15 `FirmwareDetails`; on real hardware
+  (brandenco) labels status bytes 9-15 `FirmwareDetails`; on real hardware
   (Jim Bowie, 2026-07-30) those bytes are binary (`0c 14 32 16 19 15 19`), not
   text. `UN!` answers `b"UNJB02SUF0_2.3"`. The leading `UN` matches the command
   bytes and may be an echo - but `UL!` does not echo, so it is surfaced
@@ -103,5 +103,5 @@ trivia (test counts, internal mechanics). Always state upgrade impact.
 
 Inspired by `jwhitby91/gmg_home_assistant`, rewritten from scratch (measured: 8
 non-trivial verbatim lines remained); credit stays in the README for the package's
-lifetime. Protocol cross-checked against `brandenc40/green-mountain-grill` (Go) and
+lifetime. Protocol cross-checked against `brandenco/green-mountain-grill` (Go) and
 `gmg` on PyPI.
