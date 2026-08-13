@@ -20,7 +20,7 @@ class FakeSocket:
     ``replies`` is called with each outgoing message and returns either bytes
     (delivered to the next ``recvfrom``), or ``None`` to raise
     ``socket.timeout`` - which is how both real silence and the end of a
-    discovery sweep are signalled.
+    discovery sweep are signaled.
     """
 
     def __init__(self, replies: Callable[[bytes], bytes | None]) -> None:

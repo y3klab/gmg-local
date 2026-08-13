@@ -3,7 +3,7 @@
 The status frames here are **reconstructed**, not captured: the decoded values
 are real observations from an instrumented cook on 2026-07-25, encoded back into
 frames at the documented offsets. That distinction matters - these prove the
-parser is self-consistent with observed behaviour, not that the offsets are
+parser is self-consistent with observed behavior, not that the offsets are
 right. Offsets are corroborated across four independent implementations.
 
 A genuinely captured frame has not been preserved. Capturing one is the

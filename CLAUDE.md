@@ -32,7 +32,7 @@ Home Assistant. Don't put I/O in it.
   those values, and the caller can keep its last known-good reading instead.
 - **Short datagrams are retried, not parsed.** They are a transport artifact. Parsing one
   either raises or invents fields.
-- **All I/O is serialised behind a lock.** The grill answers one client at a time;
+- **All I/O is serialized behind a lock.** The grill answers one client at a time;
   concurrent conversations lose messages.
 - **The `Grill` class exposes bounds as class attributes** (`MIN_TEMP_F`, `MAX_TEMP_F`,
   `MAX_TEMP_F_PROBE`, `PROBE_TARGET_CLEAR`). Consumers read them off the instance - moving
@@ -55,7 +55,7 @@ Home Assistant. Don't put I/O in it.
   no error. Callers must not display a target the grill never accepted.
 - **Test fixtures are reconstructed, not captured** - real decoded observations re-encoded
   at the documented offsets. They prove the parser is self-consistent with observed
-  behaviour, **not** that the offsets are right. A genuine captured frame has never been
+  behavior, **not** that the offsets are right. A genuine captured frame has never been
   preserved; capturing one is the prerequisite for decoding bytes 34-51.
 - **Firmware comes from `UN!`, not from status bytes 9-15.** Upstream
   (brandenc40) labels status bytes 9-15 `FirmwareDetails`; on real hardware

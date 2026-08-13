@@ -28,7 +28,7 @@ Requires Python 3.11+. No dependencies.
 | `discover(timeout=1, ip_bind_address="0.0.0.0", target=None)` | Broadcast for grills. Pass `target` to unicast across VLANs, where broadcast dies at the L2 edge. |
 | `Grill.status(retries=5)` | One poll, decoded. Retries on silence **and** on junk. |
 | `Grill.firmware(retries=5)` | The firmware string (`UN!`), verbatim - e.g. `UNJB02SUF0_2.3`. Same retry contract as `status()`. |
-| `model_for(firmware)` | Pure. `"Jim Bowie"` for a `JB` firmware prefix, `None` for anything unrecognised. |
+| `model_for(firmware)` | Pure. `"Jim Bowie"` for a `JB` firmware prefix, `None` for anything unrecognized. |
 | `Grill.set_temp(f)` / `set_temp_probe(f, n)` | Targets, in Fahrenheit. |
 | `Grill.power_on()` / `power_on_cool()` / `power_off()` | Cold smoke is `power_on_cool`. |
 | `parse_status(frame)` | Pure. No sockets, no clock - testable without a grill. |
@@ -80,7 +80,7 @@ Display the step number; do not invent labels.
 - **Probe writes are silently discarded while the grill is off.** Write 203, read
   back 0. No error, no acknowledgement.
 - **The grill serves one client at a time.** Concurrent conversations lose
-  messages, so all I/O here is serialised behind a lock.
+  messages, so all I/O here is serialized behind a lock.
 - **Short datagrams happen.** They are a transport artifact, not data. Parsing
   one either raises or invents fields; this library retries instead.
 - **Temperature keeps rising after the fire is cut** - roughly 18 °F over a
@@ -94,7 +94,7 @@ pip install -e ".[dev]" && pytest
 
 The fixtures are **reconstructed** - real decoded observations re-encoded at the
 documented offsets - not captured frames. They prove the parser is self-consistent
-with observed behaviour, not that the offsets are correct. Offsets are
+with observed behavior, not that the offsets are correct. Offsets are
 corroborated across four independent implementations.
 
 Preserving a genuine 52-byte capture is the prerequisite for decoding bytes

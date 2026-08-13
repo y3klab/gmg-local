@@ -75,7 +75,7 @@ def test_status_retries_through_silence_then_succeeds(fake_socket, frame):
 def test_status_retries_short_packets_rather_than_parsing_them(fake_socket, frame):
     """A truncated datagram is a transport artifact, not data.
 
-    Parsing one would either raise or invent fields. Before this behaviour
+    Parsing one would either raise or invent fields. Before this behavior
     existed, a single stray packet took every consumer's entities offline.
     """
     calls = {"n": 0}
@@ -243,7 +243,7 @@ def test_unknown_probe_number_raises(probe):
         _grill().set_temp_probe(203, probe)
 
 
-# --- transport behaviour --------------------------------------------------
+# --- transport behavior --------------------------------------------------
 
 
 def test_send_returns_none_on_timeout_rather_than_raising(fake_socket):

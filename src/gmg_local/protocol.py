@@ -116,7 +116,7 @@ def parse_firmware(raw: bytes) -> str:
     leading ``UN`` matches the command bytes and may be an echo, but ``UL!``
     does not echo its command, so stripping it would be a guess - the string is
     returned exactly as the grill sent it. The status frame's bytes 9-15,
-    labelled ``FirmwareDetails`` upstream, are binary and unrelated on the
+    labeled ``FirmwareDetails`` upstream, are binary and unrelated on the
     hardware observed; ``UN!`` is the firmware source.
     """
     try:
@@ -142,7 +142,7 @@ _MODEL_PREFIXES = {
 def model_for(firmware: str) -> str | None:
     """The grill model implied by a firmware string, or ``None`` if unknown.
 
-    Pure and conservative: an unrecognised prefix is ``None``, never a guess.
+    Pure and conservative: an unrecognized prefix is ``None``, never a guess.
     """
     if len(firmware) < 4:
         return None
