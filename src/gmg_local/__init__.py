@@ -36,7 +36,7 @@ from .protocol import (
     u32,
 )
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 #: Backwards-compatible alias. The class was lowercase ``grill`` in the code
 #: this was extracted from; ``Grill`` is the canonical name.
