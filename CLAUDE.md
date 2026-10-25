@@ -39,6 +39,10 @@ Home Assistant. Don't put I/O in it.
   them breaks callers silently.
 - Public API is re-exported from `__init__.py`. `grills` is a back-compat alias for
   `discover`, and `grill` for `Grill`.
+- **Commit subjects are plain imperative, at most 72 characters.** No emoji and no
+  Conventional Commits type prefix; an optional leading scope word is fine. Everything else
+  goes in the body. 72 is where GitHub folds a subject and where `git log --oneline`
+  truncates on an 80-column terminal.
 
 ## Gotchas
 
