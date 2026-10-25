@@ -71,6 +71,14 @@ STATUS_MIN_LEN = 34
 #: are not pellet alarms on that grill. Bytes 34..40 have no known meaning.
 STATUS_OBSERVED_LEN = 52
 
+#: First two bytes of every genuine ``UR001!`` reply (``55 52``, ASCII ``UR``).
+#:
+#: A datagram that arrives missing its first few bytes can still be 34+ bytes
+#: long, so the length guard alone lets it through and the parser reads it at
+#: the wrong offsets. A grill at rest reported temp 2821 and set temp 6425 this
+#: way (6 bytes missing) and temp 22809 / set temp 65280 (13 bytes missing).
+STATUS_HEADER = b"UR"
+
 # --- enumerations ---------------------------------------------------------
 
 #: Byte 30. Values confirmed against hardware.

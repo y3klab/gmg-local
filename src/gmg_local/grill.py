@@ -20,6 +20,7 @@ from .const import (
     MIN_TEMP_F,
     MIN_TEMP_F_PROBE,
     PROBE_TARGET_CLEAR,
+    STATUS_HEADER,
     STATUS_MIN_LEN,
     UDP_PORT,
 )
@@ -74,7 +75,10 @@ class Grill:
         Retries on silence **and on junk**. The grill occasionally answers with a
         truncated datagram; that is a transport artifact, and parsing it would
         either raise or invent missing fields. It is treated exactly like a
-        timeout.
+        timeout. "Junk" is a reply that is too short, or that does not start with
+        the ``UR`` header: a datagram missing its first few bytes can still be
+        long enough to pass the length check and would be read at the wrong
+        offsets. Every rejected reply is logged at debug level as raw hex.
 
         No caching and no stale-value grace period - the caller owns both.
         A raise means "this poll failed", not "the device is gone".
@@ -82,6 +86,7 @@ class Grill:
         raw = None
         silent = 0
         short: list[int] = []
+        bad_header: list[int] = []
 
         for _ in range(retries):
             candidate = self.send(CODE_STATUS)
@@ -91,10 +96,22 @@ class Grill:
             if len(candidate) < STATUS_MIN_LEN:
                 short.append(len(candidate))
                 _LOGGER.debug(
-                    "Short status packet from %s: %d bytes (need >= %d) - retrying",
+                    "Short status packet from %s: %d bytes (need >= %d) - retrying: %s",
                     self._ip,
                     len(candidate),
                     STATUS_MIN_LEN,
+                    candidate.hex(" "),
+                )
+                continue
+            if candidate[: len(STATUS_HEADER)] != STATUS_HEADER:
+                bad_header.append(len(candidate))
+                _LOGGER.debug(
+                    "Status packet from %s has the wrong header: %d bytes, "
+                    "expected it to start with %s - retrying: %s",
+                    self._ip,
+                    len(candidate),
+                    STATUS_HEADER.hex(" "),
+                    candidate.hex(" "),
                 )
                 continue
             raw = candidate
@@ -103,7 +120,8 @@ class Grill:
         if raw is None:
             raise GmgError(
                 f"no usable status from grill at {self._ip} after {retries} tries "
-                f"({silent} silent, {len(short)} too short: {short})"
+                f"({silent} silent, {len(short)} too short: {short}, "
+                f"{len(bad_header)} bad header: {bad_header})"
             )
 
         self.state = parse_status(list(raw))

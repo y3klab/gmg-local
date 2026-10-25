@@ -99,6 +99,7 @@ def _status_frame(
 ) -> bytes:
     """A status frame at the documented offsets."""
     f = bytearray(length)
+    f[0:2] = b"UR"  # every genuine UR001! reply starts with this
     f[2] = grill_temp & 0xFF
     f[3] = (grill_temp >> 8) & 0xFF
     f[30] = power_state

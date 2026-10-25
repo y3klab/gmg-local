@@ -112,6 +112,103 @@ def test_status_never_returns_a_partial_dict(fake_socket):
         _grill().status(retries=1)
 
 
+# --- status(): frames that lost their first bytes -------------------------
+
+#: A real reply to ``UR001!`` captured from a Daniel Boone Prime WiFi
+#: (firmware ``UNDB020002_1.2``) with the grill off: 52 bytes, starting ``55 52``.
+CAPTURED_STATUS = bytes.fromhex(
+    "55 52 43 00 59 02 96 00 05 0b 14 32 19 19 19 19 "
+    "59 02 00 00 ff ff ff ff 00 00 00 00 00 00 00 00 "
+    "01 00 00 00 00 00 00 00 03 44 42 30 32 30 30 30 "
+    "32 31 2e 32"
+)
+
+
+def test_captured_frame_is_52_bytes_and_parses():
+    """The first genuine capture in the test suite: the wire reality check."""
+    from gmg_local.protocol import parse_status
+
+    assert len(CAPTURED_STATUS) == 52
+    assert CAPTURED_STATUS[:2] == b"UR"
+    state = parse_status(list(CAPTURED_STATUS))
+    assert state["temp"] == 67
+    assert state["powerState"] == 0
+    assert state["fireState"] == 1
+    assert state["probe1_temp"] == 601  # nothing plugged in
+    assert state["probe2_temp"] == 601
+
+
+@pytest.mark.parametrize("lost", [6, 13])
+def test_frame_missing_its_first_bytes_is_retried_not_parsed(
+    fake_socket, caplog, lost
+):
+    """A reply that lost its head is still long enough to pass the length guard.
+
+    Parsed at the normal offsets it reports garbage (temp 2821 / set temp 6425
+    when 6 bytes are missing, temp 22809 / set temp 65280 when 13 are), so it
+    must be retried like a timeout.
+    """
+    truncated = CAPTURED_STATUS[lost:]
+    assert len(truncated) >= STATUS_MIN_LEN  # the length guard alone lets it in
+    calls = {"n": 0}
+
+    def replies(msg):
+        calls["n"] += 1
+        return truncated if calls["n"] == 1 else CAPTURED_STATUS
+
+    fake_socket(replies)
+    with caplog.at_level("DEBUG", logger="gmg_local.grill"):
+        state = _grill().status()
+
+    assert calls["n"] == 2
+    assert state["temp"] == 67
+    assert state["powerState"] == 0
+
+
+def test_rejected_frames_are_logged_as_raw_hex(fake_socket, caplog):
+    """So the next odd frame can be diagnosed from a debug log, not guessed at."""
+    truncated = CAPTURED_STATUS[6:]
+    calls = {"n": 0}
+
+    def replies(msg):
+        calls["n"] += 1
+        return truncated if calls["n"] == 1 else CAPTURED_STATUS
+
+    fake_socket(replies)
+    with caplog.at_level("DEBUG", logger="gmg_local.grill"):
+        _grill().status()
+
+    log = caplog.text
+    assert "wrong header" in log
+    assert str(len(truncated)) in log
+    assert truncated.hex(" ") in log
+
+
+def test_short_frames_are_logged_as_raw_hex_too(fake_socket, caplog):
+    short = bytes([0x55, 0x52, 1, 2, 3])
+    calls = {"n": 0}
+
+    def replies(msg):
+        calls["n"] += 1
+        return short if calls["n"] == 1 else CAPTURED_STATUS
+
+    fake_socket(replies)
+    with caplog.at_level("DEBUG", logger="gmg_local.grill"):
+        _grill().status()
+
+    assert short.hex(" ") in caplog.text
+
+
+def test_status_error_counts_bad_headers_separately(fake_socket):
+    """Silence, short frames and bad headers have different causes."""
+    fake_socket(lambda msg: CAPTURED_STATUS[6:])
+    with pytest.raises(GmgError) as err:
+        _grill().status(retries=2)
+    msg = str(err.value)
+    assert "0 silent" in msg and "0 too short" in msg
+    assert "2 bad header" in msg and "[46, 46]" in msg
+
+
 # --- what actually goes on the wire ---------------------------------------
 
 
