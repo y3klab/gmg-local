@@ -55,8 +55,9 @@ Home Assistant. Don't put I/O in it.
   no error. Callers must not display a target the grill never accepted.
 - **Test fixtures are reconstructed, not captured** - real decoded observations re-encoded
   at the documented offsets. They prove the parser is self-consistent with observed
-  behavior, **not** that the offsets are right. A genuine captured frame has never been
-  preserved; capturing one is the prerequisite for decoding bytes 34-51.
+  behavior, **not** that the offsets are right. One genuine frame has been captured
+  (Daniel Boone Prime, `UNDB020002_1.2`, 2026-10-18, grill off) and is recorded in the
+  README; the fixtures are not yet built from it.
 - **Firmware comes from `UN!`, not from status bytes 9-15.** Upstream
   (brandenco) labels status bytes 9-15 `FirmwareDetails`; on real hardware
   (Jim Bowie, 2026-07-30) those bytes are binary (`0c 14 32 16 19 15 19`), not
@@ -65,8 +66,11 @@ Home Assistant. Don't put I/O in it.
   **verbatim** rather than stripped on a guess. If the echo question is ever
   settled, `parse_firmware` is the one place to change.
 - **Bytes 34-51 arrive and are discarded.** A healthy grill answers with ~52 bytes and this
-  decodes through 33. Another implementation labels offsets 48 and 50 as pellet alarms -
-  unverified here, and the most promising unexplored feature.
+  decodes through 33. In the one captured frame (Daniel Boone Prime, 2026-10-18), 41-51
+  are the firmware string in ASCII (`DB0200021.2`, the `UN!` reply minus `UN` and the
+  underscore), so `gmg` 0.0.4's pellet-alarm offsets 48 and 50 fall inside it and are not
+  pellet alarms on that grill. Byte 40 read `0x03` and 34-39 read zero; neither has a
+  known meaning.
 - **PyPI blocks confusably-similar names.** `pygmg` was rejected because `Py-GMG` exists.
   The rule strips `.`, `_`, `-`, maps `l`/`i` → `1` and `o` → `0`, then lowercases. A
   404 from the JSON API does **not** mean a name is free - it 404s for projects with no

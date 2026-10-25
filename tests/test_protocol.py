@@ -6,9 +6,8 @@ frames at the documented offsets. That distinction matters - these prove the
 parser is self-consistent with observed behavior, not that the offsets are
 right. Offsets are corroborated across four independent implementations.
 
-A genuinely captured frame has not been preserved. Capturing one is the
-prerequisite for decoding bytes 34..51, and should replace these fixtures when
-it exists.
+One genuinely captured frame is preserved in README.md; these fixtures are
+not yet built from it.
 """
 
 from __future__ import annotations

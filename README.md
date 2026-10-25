@@ -46,13 +46,71 @@ anything above 255, so a 350 °F grill reports as 94 °F - `u16(94, 1) == 350`.
 |---|---|---|
 | 2, 4, 6 | grill temp, probe 1, setpoint | 16-bit LE pairs |
 | 8 | API version | |
+| 9-15 | **undecoded** | binary on both grills observed, not firmware text |
 | 16, 18 | probe 2 temp and setpoint | |
+| 20-23 | **undecoded** | |
 | 24-27 | warn state | 32-bit LE |
 | 28 | probe 1 setpoint | |
 | 30 | power state | 0 Off, 1 On, 2 Fan, 3 Cold Smoke |
 | 32 | fire state | 0 Default, 1 Off, 2 Startup, 3 Running, 4 Cool Down, 5 Fail, 198 Cold Smoke |
 | 33 | **fire state progress** | see below |
-| 34-51 | **undecoded** | `gmg` 0.0.4 labels 48 and 50 as pellet alarms - unverified |
+| 34-39 | **undecoded** | zero in the one captured frame |
+| 40 | **undecoded** | `0x03` in the one captured frame; meaning unknown |
+| 41-51 | **firmware text** | ASCII, observed on one grill - not parsed here; see below |
+
+### Bytes 41-51 are the firmware string, not pellet alarms
+
+In the one captured frame (below), bytes 41-51 read `DB0200021.2` in ASCII.
+That is the grill's `UN!` reply, `UNDB020002_1.2`, without the leading `UN` and
+without the underscore.
+
+`gmg` 0.0.4 defines offsets 48 and 50 as `pelletAlarm1` and `pelletAlarm2`,
+using the same offsets as this table (its grill temp is also 2), though its own
+code never reads them. In the captured frame those bytes are `0x32` (`2`) and
+`0x2e` (`.`), characters inside the firmware string. **They are not pellet
+alarms on that grill.** Where, if anywhere, the frame reports a pellet alarm is
+unknown.
+
+This is one grill on one firmware. Whether every model carries the firmware
+text at 41-51 is unknown; `Grill.firmware()` reads it from `UN!` and remains the
+supported source.
+
+### A captured frame
+
+The only genuine full frame this project has, captured by **m3rrym4n** and
+posted in [y3klab/gmg-ha#2](https://github.com/y3klab/gmg-ha/issues/2).
+
+- **Grill:** Green Mountain Grills Daniel Boone Prime WiFi
+- **Firmware:** `UNDB020002_1.2` (`UN!` reply)
+- **Date:** 2026-10-18
+- **Conditions:** grill off after a cook, no other client connected (Home
+  Assistant integration disabled, phone app uninstalled). 29 replies to
+  `UR001!` at 5 second intervals, all 52 bytes and byte-identical.
+
+```
+offset  0: 55 52 43 00 59 02 96 00 05 0b 14 32 19 19 19 19
+offset 16: 59 02 00 00 ff ff ff ff 00 00 00 00 00 00 00 00
+offset 32: 01 00 00 00 00 00 00 00 03 44 42 30 32 30 30 30
+offset 48: 32 31 2e 32
+```
+
+Read at the documented offsets, the decoded fields all land on plausible
+values: grill temp 67, setpoint 150, API version 5, warn state 0, probe
+setpoints 0, power state 0 (Off), fire state 1 (Off), fire state progress 0.
+Power Off alongside fire state Off, not Default, after a cook is consistent
+with the enumerations above.
+
+Observed but not decoded: bytes 9-15 read `0b 14 32 19 19 19 19` (a Jim Bowie on
+2026-07-30 read `0c 14 32 16 19 15 19`), bytes 20-23 read `ff ff ff ff`, and
+byte 40 reads `0x03`. A single grill in a single state does not say what any of
+them mean.
+
+**Unplugged probes disagree.** Both probes read **601** (`0x0259`) with nothing
+plugged in. The reconstructed test fixtures here, built from an instrumented
+cook on 2026-07-25, use **607**, and so does the
+[gmg-ha](https://github.com/y3klab/gmg-ha) README. Whether the placeholder
+differs by model, firmware or something else is unknown. This library returns
+the raw value and treats neither number specially.
 
 ### Byte 33
 
@@ -97,8 +155,8 @@ documented offsets - not captured frames. They prove the parser is self-consiste
 with observed behavior, not that the offsets are correct. Offsets are
 corroborated across four independent implementations.
 
-Preserving a genuine 52-byte capture is the prerequisite for decoding bytes
-34-51, and should replace these fixtures when one exists.
+One genuine 52-byte capture now exists ([above](#a-captured-frame)); the
+fixtures are not yet built from it.
 
 ## Credits
 
@@ -107,4 +165,6 @@ Inspired by
 by **Jason (jwhitby91)** - the work that first connected my Green Mountain Grill
 with Home Assistant - and rewritten from scratch here. Protocol cross-checked against
 [`brandenco/green-mountain-grill`](https://github.com/brandenco/green-mountain-grill)
-and **Christopher McKay's** `gmg` on PyPI.
+and **Christopher McKay's** `gmg` on PyPI. The first real full-frame capture is
+**m3rrym4n's**, from
+[y3klab/gmg-ha#2](https://github.com/y3klab/gmg-ha/issues/2).

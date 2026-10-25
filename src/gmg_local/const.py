@@ -65,8 +65,10 @@ OFFSET_FIRE_STATE_PROGRESS = 33
 STATUS_MIN_LEN = 34
 
 #: Frame length actually observed from a healthy grill. Bytes 34..51 are
-#: received and currently undecoded; ``gmg`` 0.0.4 on PyPI labels offsets 48
-#: and 50 as pellet alarms, which is unverified here.
+#: received and not parsed. In the one captured frame (Daniel Boone Prime,
+#: 2026-10-18) bytes 41..51 are the firmware string in ASCII, so offsets 48 and
+#: 50, which ``gmg`` 0.0.4 on PyPI labels as pellet alarms, fall inside it and
+#: are not pellet alarms on that grill. Bytes 34..40 have no known meaning.
 STATUS_OBSERVED_LEN = 52
 
 # --- enumerations ---------------------------------------------------------
