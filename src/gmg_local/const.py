@@ -50,6 +50,10 @@ OFFSET_GRILL_SET_TEMP = 6  # + 7 high byte
 OFFSET_API_VERSION = 8
 OFFSET_PROBE_2_TEMP = 16  # + 17 high byte
 OFFSET_PROBE_2_SET_TEMP = 18  # + 19 high byte
+#: GMG's own field: ``mWarnCode`` in its Android app, ``warningCode`` in its
+#: cloud API (which encodes low pellet as 2, not 128). Observed on hardware:
+#: byte 24 reads ``0x80`` while the low pellet sensor is tripped and returns to
+#: ``0x00`` on refill. No other bit has been observed - see README.md.
 OFFSET_WARN_STATE = 24  # 4-byte little-endian, 24..27
 OFFSET_PROBE_1_SET_TEMP = 28  # + 29 high byte
 OFFSET_POWER_STATE = 30
@@ -65,10 +69,11 @@ OFFSET_FIRE_STATE_PROGRESS = 33
 STATUS_MIN_LEN = 34
 
 #: Frame length actually observed from a healthy grill. Bytes 34..51 are
-#: received and not parsed. In the one captured frame (Daniel Boone Prime,
-#: 2026-10-18) bytes 41..51 are the firmware string in ASCII, so offsets 48 and
-#: 50, which ``gmg`` 0.0.4 on PyPI labels as pellet alarms, fall inside it and
-#: are not pellet alarms on that grill. Bytes 34..40 have no known meaning.
+#: received and not parsed. On both captured frames (Daniel Boone Prime and Jim
+#: Bowie) bytes 41..51 are the firmware string in ASCII. ``gmg`` 0.0.4 on PyPI
+#: labels 48 and 50 as pellet alarms, but those are hex-string positions, not
+#: byte offsets: 48 is byte 24, :data:`OFFSET_WARN_STATE`. Byte 34 is GMG's
+#: profile end mode; the rest of 34..40 has no known meaning - see README.md.
 STATUS_OBSERVED_LEN = 52
 
 #: First two bytes of every genuine ``UR001!`` reply (``55 52``, ASCII ``UR``).
