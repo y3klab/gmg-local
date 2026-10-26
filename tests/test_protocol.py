@@ -6,8 +6,8 @@ frames at the documented offsets. That distinction matters - these prove the
 parser is self-consistent with observed behavior, not that the offsets are
 right. Offsets are corroborated across four independent implementations.
 
-One genuinely captured frame is preserved in README.md; these fixtures are
-not yet built from it.
+Two genuinely captured frames are preserved in README.md; these fixtures are
+not yet built from them.
 """
 
 from __future__ import annotations
