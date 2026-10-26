@@ -37,7 +37,8 @@ Requires Python 3.11+. No dependencies.
 ## What the status frame contains
 
 A healthy grill answers `UR001!` with **52 bytes**; this library decodes through
-byte 33.
+byte 33. Rows marked *not parsed* are documented here but not returned by
+`parse_status()`.
 
 Temperatures are **16-bit little-endian pairs**. Reading only the low byte wraps
 anything above 255, so a 350 °F grill reports as 94 °F - `u16(94, 1) == 350`.
@@ -46,39 +47,130 @@ anything above 255, so a 350 °F grill reports as 94 °F - `u16(94, 1) == 350`.
 |---|---|---|
 | 2, 4, 6 | grill temp, probe 1, setpoint | 16-bit LE pairs |
 | 8 | API version | |
-| 9-15 | **undecoded** | binary on both grills observed, not firmware text |
+| 9-15 | stored settings, *inferred* | not parsed; binary, not firmware text; see below |
 | 16, 18 | probe 2 temp and setpoint | |
-| 20-23 | **undecoded** | |
-| 24-27 | warn state | 32-bit LE |
+| 20-23 | profile time remaining | not parsed; GMG's `profileRemainingTime`; see below |
+| 24-27 | warn state | 32-bit LE; GMG's `warningCode`; byte 24 `0x80` is **low pellet**, see below |
 | 28 | probe 1 setpoint | |
 | 30 | power state | 0 Off, 1 On, 2 Fan, 3 Cold Smoke |
+| 31 | grill mode | not parsed; GMG's `grillMode`; see below |
 | 32 | fire state | 0 Default, 1 Off, 2 Startup, 3 Running, 4 Cool Down, 5 Fail, 198 Cold Smoke |
 | 33 | **fire state progress** | see below |
-| 34-39 | **undecoded** | zero in the one captured frame |
-| 40 | **undecoded** | `0x03` in the one captured frame; meaning unknown |
-| 41-51 | **firmware text** | ASCII, observed on one grill - not parsed here; see below |
+| 34 | profile end mode | not parsed; GMG's `profileEndMode`; see below |
+| 35 | **undecoded** | `0x03` on `SUF0_2.3` firmware, zero on `DB020002_1.2` |
+| 36-40 | **undecoded** | zero, except byte 40 is `0x03` on `DB020002_1.2` |
+| 41-51 | **firmware text** | ASCII; not parsed; see below |
 
-### Bytes 41-51 are the firmware string, not pellet alarms
+### Byte 24: low pellet
 
-In the one captured frame (below), bytes 41-51 read `DB0200021.2` in ASCII.
-That is the grill's `UN!` reply, `UNDB020002_1.2`, without the leading `UN` and
-without the underscore.
+Bytes 24-27 are GMG's own field, not a community guess: GMG's decompiled
+Android app reads them as `mWarnCode`, and GMG's cloud API calls the field
+`warningCode`. This library returns it as `warnState`.
 
-`gmg` 0.0.4 defines offsets 48 and 50 as `pelletAlarm1` and `pelletAlarm2`,
-using the same offsets as this table (its grill temp is also 2), though its own
-code never reads them. In the captured frame those bytes are `0x32` (`2`) and
-`0x2e` (`.`), characters inside the firmware string. **They are not pellet
-alarms on that grill.** Where, if anywhere, the frame reports a pellet alarm is
-unknown.
+**Byte 24 reads `0x80` while the hopper's low pellet sensor is tripped**, so
+`warnState` reads 128. Observed on the Jim Bowie [below](#captured-frames) on
+2026-10-25: with the grill lit and in Startup, tripping the sensor moved byte 24
+from `0x00` to `0x80` and changed nothing else in the frame. Bytes 25-27 stayed
+zero.
 
-This is one grill on one firmware. Whether every model carries the firmware
-text at 41-51 is unknown; `Grill.firmware()` reads it from `UN!` and remains the
-supported source.
+**It clears itself.** Refilling the hopper returned byte 24 to `0x00`, so it is
+the sensor's live state, not a latched alarm, and there is nothing to
+acknowledge or reset. That clear was seen with the grill already switched off;
+clearing mid cook is expected but not yet observed directly.
 
-### A captured frame
+An independent 2017 tcpdump capture in
+[`Aenima4six2/gmg`](https://github.com/Aenima4six2/gmg) (`doc/decode.txt`), taken
+on the older 36-byte frame with the grill off, shows the same thing: byte 24
+goes to `0x80` and nothing else changes. Two grills, nine years and two frame
+formats apart, agree.
 
-The only genuine full frame this project has, captured by **m3rrym4n** and
-posted in [y3klab/gmg-ha#2](https://github.com/y3klab/gmg-ha/issues/2).
+**The cloud encodes it differently.** GMG's cloud API reports low pellet as
+`warningCode` 2, not 128. The cloud re-encodes the field; on the local wire the
+value is `0x80`. A check ported from a cloud client will test the wrong value.
+
+**The other bits are unknown.** The decompiled app names eight warnings:
+`FAN_OVERLOADED`, `AUGER_OVERLOADED`, `IGNITOR_OVERLOADED`, `BATTERY_LOW`,
+`FAN_DISCONNECTED`, `AUGER_DISCONNECTED`, `IGNITOR_DISCONNECTED` and
+`LOW_PELLET`. *Inference:* if those are bit positions in byte 24, in that order,
+`LOW_PELLET` is bit 7, which is `0x80`; that is the only reading under which the
+names and the observation agree. None of the other seven has been observed, and
+public implementations disagree on their values. This library returns
+`warnState` raw and names no bits.
+
+### Bytes 41-51: firmware text
+
+Bytes 41-51 hold the grill's `UN!` reply in ASCII, without the leading `UN` and
+without the underscore. Both captured frames follow the rule; the Jim Bowie's
+was predicted from it before that frame was taken.
+
+| grill | `UN!` reply | bytes 41-51 |
+|---|---|---|
+| Daniel Boone Prime | `UNDB020002_1.2` | `DB0200021.2` |
+| Jim Bowie | `UNJB02SUF0_2.3` | `JB02SUF02.3` |
+
+Both come to exactly 11 characters, the width of the field. This library does
+not parse it; `Grill.firmware()` reads `UN!` and remains the supported source.
+
+`gmg` 0.0.4 defines `pelletAlarm1 = 48` and `pelletAlarm2 = 50`, though its own
+code never reads them. Those numbers are character positions in a hex string,
+carried over from `Aenima4six2/gmg`'s JavaScript client, which reads the frame
+as hex. Hex position 48 is byte 24: the labels point at the warn field, where
+low pellet does live. Read as byte offsets into a 52-byte frame, as this
+table's offsets are, 48 and 50 fall inside the firmware string instead.
+
+### Bytes 34-40: the wandering `0x03`
+
+Between the fire state and the firmware text, one byte reads `0x03`. It sits at
+byte 35 on `SUF0_2.3` firmware - the Jim Bowie below, and a Daniel Boone frame
+on `DB02SUF0_2.3` published with `gmg` 0.0.4 - and at byte 40 on the Daniel
+Boone Prime's older `DB020002_1.2`. Its position follows firmware, not model.
+What it means is unknown. The rest of 34-40 reads zero on every 52-byte frame
+seen.
+
+### Bytes 20-23, 31 and 34: profile fields
+
+GMG's Android app and cloud API name these. A profile is GMG's programmed
+multi-step cook.
+
+| offset | app | cloud |
+|---|---|---|
+| 20-23 | `mCurveRemainTime` (handed to a countdown) | `profileRemainingTime` |
+| 31 | `mGrillMode` | `grillMode` |
+| 34 | `mProfileEnd` | `profileEndMode` |
+
+Every capture so far, here and in other implementations, reads `ff ff ff ff`
+at 20-23, and none was taken with a profile running, so a live countdown has
+never been seen on the wire and its encoding is unknown. Bytes 31 and 34 read
+zero in both captures below. The names are GMG's; what values they take is not
+yet observed.
+
+### Bytes 9-15: probably stored settings (inference)
+
+Bytes 9-15 read `0b 14 32 19 19 19 19` on the Daniel Boone Prime and
+`0c 14 32 16 19 15 19` on the Jim Bowie. The Jim Bowie's seven bytes are
+identical, byte for byte, to a reading of the same grill 87 days earlier
+(2026-07-30). They are binary, not firmware text, and they do not advance, so
+they are not a clock or a counter.
+
+*Inference, not a confirmed reading:*
+[`facultymatt/gmg-js`](https://github.com/facultymatt/gmg-js) decodes them as a
+stored settings block: byte 9 carries pizza mode and a mode code, byte 10 the
+grill temperature adjust, and bytes 12-15 the probe adjusts. The adjusts are
+stored with a bias, so a raw 20 (`0x14`) means zero for the grill and 25
+(`0x19`) means zero for a probe. That fits the bytes never changing, and it
+fits both grills reading `0x14` at byte 10. Nobody has yet changed a setting
+and watched these bytes move.
+
+### Captured frames
+
+Both genuine full frames this project has. Read at the documented offsets,
+every decoded field lands on a plausible value for a grill that is switched
+off.
+
+#### Daniel Boone Prime
+
+Captured by **m3rrym4n** and posted in
+[y3klab/gmg-ha#2](https://github.com/y3klab/gmg-ha/issues/2).
 
 - **Grill:** Green Mountain Grills Daniel Boone Prime WiFi
 - **Firmware:** `UNDB020002_1.2` (`UN!` reply)
@@ -94,23 +186,37 @@ offset 32: 01 00 00 00 00 00 00 00 03 44 42 30 32 30 30 30
 offset 48: 32 31 2e 32
 ```
 
-Read at the documented offsets, the decoded fields all land on plausible
-values: grill temp 67, setpoint 150, API version 5, warn state 0, probe
-setpoints 0, power state 0 (Off), fire state 1 (Off), fire state progress 0.
-Power Off alongside fire state Off, not Default, after a cook is consistent
-with the enumerations above.
+Grill temp 67, setpoint 150, API version 5, warn state 0, probe setpoints 0,
+power state 0 (Off), fire state 1 (Off), fire state progress 0. Power Off
+alongside fire state Off, not Default, after a cook is consistent with the
+enumerations above.
 
-Observed but not decoded: bytes 9-15 read `0b 14 32 19 19 19 19` (a Jim Bowie on
-2026-07-30 read `0c 14 32 16 19 15 19`), bytes 20-23 read `ff ff ff ff`, and
-byte 40 reads `0x03`. A single grill in a single state does not say what any of
-them mean.
+#### Jim Bowie
 
-**Unplugged probes disagree.** Both probes read **601** (`0x0259`) with nothing
-plugged in. The reconstructed test fixtures here, built from an instrumented
-cook on 2026-07-25, use **607**, and so does the
-[gmg-ha](https://github.com/y3klab/gmg-ha) README. Whether the placeholder
-differs by model, firmware or something else is unknown. This library returns
-the raw value and treats neither number specially.
+Captured from the maintainer's own grill.
+
+- **Grill:** Green Mountain Grills Jim Bowie
+- **Firmware:** `UNJB02SUF0_2.3` (`UN!` reply, read in the same session)
+- **Date:** 2026-10-25
+- **Conditions:** grill off.
+
+```
+offset  0: 55 52 55 00 5f 02 96 00 06 0c 14 32 16 19 15 19
+offset 16: 61 02 00 00 ff ff ff ff 00 00 00 00 00 00 00 00
+offset 32: 01 00 00 03 00 00 00 00 00 4a 42 30 32 53 55 46
+offset 48: 30 32 2e 33
+```
+
+Grill temp 85, setpoint 150 (kept while off), API version 6, warn state 0,
+probe setpoints 0, power state 0 (Off), fire state 1 (Off), fire state progress
+0.
+
+**Unplugged probes report a per-unit value, not one sentinel.** With nothing
+plugged in, the Daniel Boone Prime reads **601** on both probes, and the Jim
+Bowie reads **607** on probe 1 and **609** on probe 2 in the same frame. Other
+implementations record 557, 601 and 608. The number is an open-circuit reading
+that differs between grills and between the probe sockets of one grill. This
+library returns the raw value and treats no number specially.
 
 ### Byte 33
 
@@ -155,8 +261,8 @@ documented offsets - not captured frames. They prove the parser is self-consiste
 with observed behavior, not that the offsets are correct. Offsets are
 corroborated across four independent implementations.
 
-One genuine 52-byte capture now exists ([above](#a-captured-frame)); the
-fixtures are not yet built from it.
+Two genuine 52-byte captures now exist ([above](#captured-frames)); the
+fixtures are not yet built from them.
 
 ## Credits
 
@@ -167,4 +273,8 @@ with Home Assistant - and rewritten from scratch here. Protocol cross-checked ag
 [`brandenco/green-mountain-grill`](https://github.com/brandenco/green-mountain-grill)
 and **Christopher McKay's** `gmg` on PyPI. The first real full-frame capture is
 **m3rrym4n's**, from
-[y3klab/gmg-ha#2](https://github.com/y3klab/gmg-ha/issues/2).
+[y3klab/gmg-ha#2](https://github.com/y3klab/gmg-ha/issues/2). The low pellet
+value was first recorded in
+[`Aenima4six2/gmg`](https://github.com/Aenima4six2/gmg)'s 2017 capture, and GMG's
+own field names come from the decompiled app code published in
+[`FeatherKing/grillsrv`](https://github.com/FeatherKing/grillsrv).
