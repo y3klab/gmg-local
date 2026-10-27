@@ -104,7 +104,7 @@ public implementations disagree on their values. This library returns
 ### Bytes 41-51: firmware text
 
 Bytes 41-51 hold the grill's `UN!` reply in ASCII, without the leading `UN` and
-without the underscore. Both captured frames follow the rule; the Jim Bowie's
+without the underscore. All four captured frames follow the rule; the Jim Bowie's
 was predicted from it before that frame was taken.
 
 | grill | `UN!` reply | bytes 41-51 |
@@ -149,7 +149,7 @@ multi-step cook.
 Every capture so far, here and in other implementations, reads `ff ff ff ff`
 at 20-23, and none was taken with a profile running, so a live countdown has
 never been seen on the wire and its encoding is unknown. Bytes 31 and 34 read
-zero in both captures below. The names are GMG's; what values they take is not
+zero in all four captures below. The names are GMG's; what values they take is not
 yet observed.
 
 ### Bytes 9-15: probably stored settings (inference)
