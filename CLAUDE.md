@@ -59,9 +59,10 @@ Home Assistant. Don't put I/O in it.
   no error. Callers must not display a target the grill never accepted.
 - **Test fixtures are reconstructed, not captured** - real decoded observations re-encoded
   at the documented offsets. They prove the parser is self-consistent with observed
-  behavior, **not** that the offsets are right. Two genuine frames have been captured
-  (Daniel Boone Prime, `UNDB020002_1.2`, 2026-10-18, and Jim Bowie, `UNJB02SUF0_2.3`,
-  2026-10-25, both grill off) and are recorded in the README; the fixtures are not yet
+  behavior, **not** that the offsets are right. Four genuine frames have been captured
+  (three from the Daniel Boone Prime, `UNDB020002_1.2`: 2026-10-18 plus a low pellet
+  tripped/clear pair from a separate session; one from the Jim Bowie, `UNJB02SUF0_2.3`,
+  2026-10-25; all grill off) and are recorded in the README; the fixtures are not yet
   built from them.
 - **Firmware comes from `UN!`, not from status bytes 9-15.** Upstream
   (brandenco) labels status bytes 9-15 `FirmwareDetails`; on real hardware

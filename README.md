@@ -127,10 +127,13 @@ table's offsets are, 48 and 50 fall inside the firmware string instead.
 Between the fire state and the firmware text, one byte reads `0x03`. It sits at
 byte 35 on `SUF0_2.3` firmware - the Jim Bowie below, and a Daniel Boone frame
 on `DB02SUF0_2.3` published with `gmg` 0.0.4 - and at byte 40 on the Daniel
-Boone Prime's older `DB020002_1.2`. Its position follows firmware, not model,
-now evidenced by the matched tripped and clear pair from one Daniel Boone device
-and session as well as the frames collected separately. What it means is unknown. The rest of 34-40 reads zero on
-every 52-byte frame seen.
+Boone Prime's older `DB020002_1.2`. Its position follows firmware, not model.
+Byte 35 is seen on more than one grill. The byte-40 evidence all comes from one
+contributor's grill: the matched tripped and clear pair
+[below](#captured-frames), from one session, reconfirms `0x03` at byte 40 on
+`UNDB020002_1.2` on the same device as the earlier frame, and adds nothing on
+firmware versus model. What it means is unknown. The rest of 34-40 reads zero
+on every 52-byte frame seen.
 
 ### Bytes 20-23, 31 and 34: profile fields
 
@@ -168,9 +171,9 @@ and watched these bytes move.
 
 ### Captured frames
 
-Both genuine full frames this project has. Read at the documented offsets,
-every decoded field lands on a plausible value for a grill that is switched
-off.
+The four genuine full frames this project has, from two grills. Read at the
+documented offsets, every decoded field lands on a plausible value for a grill
+that is switched off.
 
 #### Daniel Boone Prime
 
@@ -196,9 +199,9 @@ power state 0 (Off), fire state 1 (Off), fire state progress 0. Power Off
 alongside fire state Off, not Default, after a cook is consistent with the
 enumerations above.
 
-Low pellet sensor captures from the same grill and session, with the grill cold
-and off, the integration disabled, and the hopper sensor held tripped for about
-two minutes:
+Low pellet sensor captures from the same grill, taken together in a separate
+session from the 2026-10-18 capture above, with the grill cold and off, the
+integration disabled, and the hopper sensor held tripped for about two minutes:
 
 - **Tripped:**
 ```
@@ -282,7 +285,7 @@ documented offsets - not captured frames. They prove the parser is self-consiste
 with observed behavior, not that the offsets are correct. Offsets are
 corroborated across four independent implementations.
 
-Two genuine 52-byte captures now exist ([above](#captured-frames)); the
+Four genuine 52-byte captures now exist ([above](#captured-frames)); the
 fixtures are not yet built from them.
 
 ## Credits
