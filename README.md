@@ -68,10 +68,14 @@ Android app reads them as `mWarnCode`, and GMG's cloud API calls the field
 `warningCode`. This library returns it as `warnState`.
 
 **Byte 24 reads `0x80` while the hopper's low pellet sensor is tripped**, so
-`warnState` reads 128. Observed on the Jim Bowie [below](#captured-frames) on
-2026-10-25: with the grill lit and in Startup, tripping the sensor moved byte 24
-from `0x00` to `0x80` and changed nothing else in the frame. Bytes 25-27 stayed
-zero.
+`warnState` reads 128. This is confirmed on two independent firmware
+generations: `UNJB02SUF0_2.3` on the Jim Bowie [below](#captured-frames), and
+`UNDB020002_1.2` on the Daniel Boone captured by GitHub user `m3rrym4n`. On the
+Jim Bowie, tripping the sensor moved byte 24 from `0x00` to `0x80` and changed
+nothing else in the frame. On the Daniel Boone, byte 24 was `0x80` while
+tripped and `0x00` after release; the two captures are a matched pair from one
+session, with the grill cold and off and the integration disabled. Bytes 25-27
+stayed zero.
 
 **It clears itself.** Refilling the hopper returned byte 24 to `0x00`, so it is
 the sensor's live state, not a latched alarm, and there is nothing to
@@ -81,8 +85,8 @@ clearing mid cook is expected but not yet observed directly.
 An independent 2017 tcpdump capture in
 [`Aenima4six2/gmg`](https://github.com/Aenima4six2/gmg) (`doc/decode.txt`), taken
 on the older 36-byte frame with the grill off, shows the same thing: byte 24
-goes to `0x80` and nothing else changes. Two grills, nine years and two frame
-formats apart, agree.
+goes to `0x80` and nothing else changes. Three captures, across nine years and
+two frame formats, agree.
 
 **The cloud encodes it differently.** GMG's cloud API reports low pellet as
 `warningCode` 2, not 128. The cloud re-encodes the field; on the local wire the
@@ -100,7 +104,7 @@ public implementations disagree on their values. This library returns
 ### Bytes 41-51: firmware text
 
 Bytes 41-51 hold the grill's `UN!` reply in ASCII, without the leading `UN` and
-without the underscore. Both captured frames follow the rule; the Jim Bowie's
+without the underscore. All four captured frames follow the rule; the Jim Bowie's
 was predicted from it before that frame was taken.
 
 | grill | `UN!` reply | bytes 41-51 |
@@ -124,8 +128,12 @@ Between the fire state and the firmware text, one byte reads `0x03`. It sits at
 byte 35 on `SUF0_2.3` firmware - the Jim Bowie below, and a Daniel Boone frame
 on `DB02SUF0_2.3` published with `gmg` 0.0.4 - and at byte 40 on the Daniel
 Boone Prime's older `DB020002_1.2`. Its position follows firmware, not model.
-What it means is unknown. The rest of 34-40 reads zero on every 52-byte frame
-seen.
+Byte 35 is seen on more than one grill. The byte-40 evidence all comes from one
+contributor's grill: the matched tripped and clear pair
+[below](#captured-frames), from one session, reconfirms `0x03` at byte 40 on
+`UNDB020002_1.2` on the same device as the earlier frame, and adds nothing on
+firmware versus model. What it means is unknown. The rest of 34-40 reads zero
+on every 52-byte frame seen.
 
 ### Bytes 20-23, 31 and 34: profile fields
 
@@ -141,7 +149,7 @@ multi-step cook.
 Every capture so far, here and in other implementations, reads `ff ff ff ff`
 at 20-23, and none was taken with a profile running, so a live countdown has
 never been seen on the wire and its encoding is unknown. Bytes 31 and 34 read
-zero in both captures below. The names are GMG's; what values they take is not
+zero in all four captures below. The names are GMG's; what values they take is not
 yet observed.
 
 ### Bytes 9-15: probably stored settings (inference)
@@ -163,9 +171,9 @@ and watched these bytes move.
 
 ### Captured frames
 
-Both genuine full frames this project has. Read at the documented offsets,
-every decoded field lands on a plausible value for a grill that is switched
-off.
+The four genuine full frames this project has, from two grills. Read at the
+documented offsets, every decoded field lands on a plausible value for a grill
+that is switched off.
 
 #### Daniel Boone Prime
 
@@ -190,6 +198,22 @@ Grill temp 67, setpoint 150, API version 5, warn state 0, probe setpoints 0,
 power state 0 (Off), fire state 1 (Off), fire state progress 0. Power Off
 alongside fire state Off, not Default, after a cook is consistent with the
 enumerations above.
+
+Low pellet sensor captures from the same grill, taken together in a separate
+session from the 2026-10-18 capture above, with the grill cold and off, the
+integration disabled, and the hopper sensor held tripped for about two minutes:
+
+- **Tripped:**
+```
+55 52 45 00 59 02 96 00 05 0b 14 32 19 19 19 19 59 02 00 00 ff ff ff ff 80 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 03 44 42 30 32 30 30 30 32 31 2e 32
+```
+- **Clear:**
+```
+55 52 46 00 59 02 96 00 05 0b 14 32 19 19 19 19 59 02 00 00 ff ff ff ff 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 03 44 42 30 32 30 30 30 32 31 2e 32
+```
+
+The only differences are byte 24 and the grill temperature in bytes 2 and 3:
+69 F in the tripped frame and 70 F in the clear frame.
 
 #### Jim Bowie
 
@@ -261,7 +285,7 @@ documented offsets - not captured frames. They prove the parser is self-consiste
 with observed behavior, not that the offsets are correct. Offsets are
 corroborated across four independent implementations.
 
-Two genuine 52-byte captures now exist ([above](#captured-frames)); the
+Four genuine 52-byte captures now exist ([above](#captured-frames)); the
 fixtures are not yet built from them.
 
 ## Credits
