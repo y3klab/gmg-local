@@ -68,10 +68,14 @@ Android app reads them as `mWarnCode`, and GMG's cloud API calls the field
 `warningCode`. This library returns it as `warnState`.
 
 **Byte 24 reads `0x80` while the hopper's low pellet sensor is tripped**, so
-`warnState` reads 128. Observed on the Jim Bowie [below](#captured-frames) on
-2026-10-25: with the grill lit and in Startup, tripping the sensor moved byte 24
-from `0x00` to `0x80` and changed nothing else in the frame. Bytes 25-27 stayed
-zero.
+`warnState` reads 128. This is confirmed on two independent firmware
+generations: `UNJB02SUF0_2.3` on the Jim Bowie [below](#captured-frames), and
+`UNDB020002_1.2` on the Daniel Boone captured by GitHub user `m3rrym4n`. On the
+Jim Bowie, tripping the sensor moved byte 24 from `0x00` to `0x80` and changed
+nothing else in the frame. On the Daniel Boone, byte 24 was `0x80` while
+tripped and `0x00` after release; the two captures are a matched pair from one
+session, with the grill cold and off and the integration disabled. Bytes 25-27
+stayed zero.
 
 **It clears itself.** Refilling the hopper returned byte 24 to `0x00`, so it is
 the sensor's live state, not a latched alarm, and there is nothing to
@@ -81,8 +85,8 @@ clearing mid cook is expected but not yet observed directly.
 An independent 2017 tcpdump capture in
 [`Aenima4six2/gmg`](https://github.com/Aenima4six2/gmg) (`doc/decode.txt`), taken
 on the older 36-byte frame with the grill off, shows the same thing: byte 24
-goes to `0x80` and nothing else changes. Two grills, nine years and two frame
-formats apart, agree.
+goes to `0x80` and nothing else changes. Three captures, across nine years and
+two frame formats, agree.
 
 **The cloud encodes it differently.** GMG's cloud API reports low pellet as
 `warningCode` 2, not 128. The cloud re-encodes the field; on the local wire the
@@ -123,9 +127,10 @@ table's offsets are, 48 and 50 fall inside the firmware string instead.
 Between the fire state and the firmware text, one byte reads `0x03`. It sits at
 byte 35 on `SUF0_2.3` firmware - the Jim Bowie below, and a Daniel Boone frame
 on `DB02SUF0_2.3` published with `gmg` 0.0.4 - and at byte 40 on the Daniel
-Boone Prime's older `DB020002_1.2`. Its position follows firmware, not model.
-What it means is unknown. The rest of 34-40 reads zero on every 52-byte frame
-seen.
+Boone Prime's older `DB020002_1.2`. Its position follows firmware, not model,
+now evidenced by the matched tripped and clear pair from one Daniel Boone device
+and session as well as the frames collected separately. What it means is unknown. The rest of 34-40 reads zero on
+every 52-byte frame seen.
 
 ### Bytes 20-23, 31 and 34: profile fields
 
@@ -190,6 +195,22 @@ Grill temp 67, setpoint 150, API version 5, warn state 0, probe setpoints 0,
 power state 0 (Off), fire state 1 (Off), fire state progress 0. Power Off
 alongside fire state Off, not Default, after a cook is consistent with the
 enumerations above.
+
+Low pellet sensor captures from the same grill and session, with the grill cold
+and off, the integration disabled, and the hopper sensor held tripped for about
+two minutes:
+
+- **Tripped:**
+```
+55 52 45 00 59 02 96 00 05 0b 14 32 19 19 19 19 59 02 00 00 ff ff ff ff 80 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 03 44 42 30 32 30 30 30 32 31 2e 32
+```
+- **Clear:**
+```
+55 52 46 00 59 02 96 00 05 0b 14 32 19 19 19 19 59 02 00 00 ff ff ff ff 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 03 44 42 30 32 30 30 30 32 31 2e 32
+```
+
+The only differences are byte 24 and the grill temperature in bytes 2 and 3:
+69 F in the tripped frame and 70 F in the clear frame.
 
 #### Jim Bowie
 
